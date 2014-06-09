@@ -82,7 +82,8 @@ skipToEOL :: Parser ()
 skipToEOL = A.skipWhile (/= '\n')
 
 classicP :: Parser CronSchedule
-classicP = CronSchedule <$> (minutesP    <* space)
+classicP = CronSchedule <$> (secondsP    <* space)
+                        <*> (minutesP    <* space)
                         <*> (hoursP      <* space)
                         <*> (dayOfMonthP <* space)
                         <*> (monthP      <* space)
@@ -136,6 +137,9 @@ hourlyP  = A.string "@hourly"  *> pure hourly
 
 
 --TODO: must handle a combination of many of these. EITHER just *, OR a list of
+secondsP :: Parser SecondSpec
+secondsP = Seconds <$> cronFieldP
+
 minutesP :: Parser MinuteSpec
 minutesP = Minutes <$> cronFieldP
 

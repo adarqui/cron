@@ -1,3 +1,10 @@
+adding to the fork:
+- seconds resolution
+- microseconds resolution
+- nice example with timers that go off second, minute, hour, week, month, year.. etc (will be in examples/simple.c)
+
+
+
 cron
 ====
 [![Build Status](https://secure.travis-ci.org/MichaelXavier/cron.png)](http://travis-ci.org/MichaelXavier/cron)

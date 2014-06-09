@@ -30,6 +30,7 @@
 module System.Cron (CronSchedule(..),
                     Crontab(..),
                     CrontabEntry(..),
+                    SecondSpec(..),
                     MinuteSpec(..),
                     HourSpec(..),
                     MonthSpec(..),
@@ -42,6 +43,7 @@ module System.Cron (CronSchedule(..),
                     weekly,
                     hourly,
                     everyMinute,
+                    everySecond,
                     scheduleMatches) where
 
 import           Data.List                   (intercalate)
@@ -53,7 +55,8 @@ import           Data.Time.Clock             (UTCTime(..))
 import           Data.Time.LocalTime         (TimeOfDay(..), timeToTimeOfDay)
 
 -- | Specification for a cron expression
-data CronSchedule = CronSchedule { minute     :: MinuteSpec,     -- ^ Which minutes to run. First field in a cron specification.
+data CronSchedule = CronSchedule { second     :: SecondSpec,
+                                   minute     :: MinuteSpec,     -- ^ Which minutes to run. First field in a cron specification.
                                    hour       :: HourSpec,       -- ^ Which hours to run. Second field in a cron specification.
                                    dayOfMonth :: DayOfMonthSpec, -- ^ Which days of the month to run. Third field in a cron specification.
                                    month      :: MonthSpec,      -- ^ Which months to run. Fourth field in a cron specification.
@@ -66,7 +69,8 @@ instance Show CronSchedule where
 
 showRaw :: CronSchedule
            -> String
-showRaw cs = unwords [show $ minute cs,
+showRaw cs = unwords [show $ second cs,
+                      show $ minute cs,
                       show $ hour cs,
                       show $ dayOfMonth cs,
                       show $ month cs,
@@ -90,6 +94,11 @@ data CrontabEntry = CommandEntry { schedule :: CronSchedule,
 instance Show CrontabEntry where
   show CommandEntry { schedule = s, command = c} = showRaw s ++ " " ++ unpack c
   show EnvVariable  { varName = n, varValue = v} = unpack n ++ "=" ++ unpack v
+
+data SecondSpec = Seconds CronField deriving (Eq)
+
+instance Show SecondSpec where
+  show (Seconds cf) = show cf
 
 -- | Minutes field of a cron expression
 data MinuteSpec = Minutes CronField
@@ -163,8 +172,22 @@ hourly :: CronSchedule
 hourly = everyMinute { minute = Minutes $ SpecificField 0 }
 
 -- | Shorthand for an expression that always matches. Parsed with * * * * *
+{-
 everyMinute :: CronSchedule
-everyMinute = CronSchedule { minute     = Minutes Star,
+everyMinute = CronSchedule { second     = Seconds Star,
+                             minute     = Minutes Star,
+                             hour       = Hours Star,
+                             dayOfMonth = DaysOfMonth Star,
+                             month      = Months Star,
+                             dayOfWeek  = DaysOfWeek Star}
+                             -}
+everyMinute :: CronSchedule
+everyMinute = everySecond { second = Seconds $ SpecificField 0 }
+
+-- | Shorthand for an expression that always matches. Parsed with * * * * *
+everySecond :: CronSchedule
+everySecond = CronSchedule { second     = Seconds Star,
+                             minute     = Minutes Star,
                              hour       = Hours Star,
                              dayOfMonth = DaysOfMonth Star,
                              month      = Months Star,
@@ -176,7 +199,9 @@ everyMinute = CronSchedule { minute     = Minutes Star,
 scheduleMatches :: CronSchedule
                    -> UTCTime
                    -> Bool
-scheduleMatches CronSchedule { minute     = Minutes mins,
+scheduleMatches CronSchedule {
+                               second     = Seconds secs,
+                               minute     = Minutes mins,
                                hour       = Hours hrs,
                                dayOfMonth = DaysOfMonth doms,
                                month      = Months months,
@@ -233,6 +258,7 @@ data CronUnit = CMinute     |
                 CDayOfWeek deriving (Show, Eq)
 
 maxValue :: CronUnit -> Int
+--maxValue CSecond     = 59
 maxValue CMinute     = 59
 maxValue CHour       = 23
 maxValue CDayOfMonth = 31
