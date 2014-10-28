@@ -26,6 +26,12 @@ Parsing cron strings
  parseOnly cronScheduleLooseGranular "* */2 * 3 * 4,5,6"
 ```
 
+TODO
+---
+
+Cover my modifications via the already-existing test suite/hspec.
+
+
 cron
 ====
 [![Build Status](https://secure.travis-ci.org/MichaelXavier/cron.png)](http://travis-ci.org/MichaelXavier/cron)
