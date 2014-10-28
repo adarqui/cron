@@ -12,7 +12,6 @@ import qualified Data.Text as T
 
 main :: IO ()
 main = do
- parseTests
  argv <- getArgs
  case argv of
   (pause:schedule:[]) -> do
