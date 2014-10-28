@@ -22,6 +22,7 @@
 --------------------------------------------------------------------
 module System.Cron.Parser (cronSchedule,
                            cronScheduleLoose,
+                           cronScheduleLooseGranular,
                            crontab,
                            crontabEntry) where
 
@@ -50,6 +51,16 @@ cronScheduleLoose = yearlyP  <|>
                     dailyP   <|>
                     hourlyP  <|>
                     classicP
+
+cronScheduleLooseGranular :: Parser CronSchedule
+cronScheduleLooseGranular =
+                    yearlyP  <|>
+                    monthlyP <|>
+                    weeklyP  <|>
+                    dailyP   <|>
+                    hourlyP  <|>
+                    secondlyP  <|>
+                    classicGranularP
 
 -- | Parses a full crontab file, omitting comments and including environment
 -- variable sets (e.g FOO=BAR).
@@ -82,7 +93,17 @@ skipToEOL :: Parser ()
 skipToEOL = A.skipWhile (/= '\n')
 
 classicP :: Parser CronSchedule
-classicP = CronSchedule <$> (secondsP    <* space)
+classicP = CronSchedule <$> secondsP0
+                        <*> (minutesP    <* space)
+                        <*> (hoursP      <* space)
+                        <*> (dayOfMonthP <* space)
+                        <*> (monthP      <* space)
+                        <*> dayOfWeekP
+  where space = A.char ' '
+
+classicGranularP :: Parser CronSchedule
+classicGranularP = CronSchedule
+                        <$> (secondsP    <* space)
                         <*> (minutesP    <* space)
                         <*> (hoursP      <* space)
                         <*> (dayOfMonthP <* space)
@@ -135,8 +156,15 @@ dailyP   = A.string "@daily"   *> pure daily
 hourlyP :: Parser CronSchedule
 hourlyP  = A.string "@hourly"  *> pure hourly
 
+secondlyP :: Parser CronSchedule
+secondlyP = A.string "@seconds" *> pure secondly
 
---TODO: must handle a combination of many of these. EITHER just *, OR a list of
+{-
+ - secondsP0: Always returns 0. Keeps backward compatibility with previous versions of classicP etc.
+ -}
+secondsP0 :: Parser SecondSpec
+secondsP0 = return $ Seconds $ SpecificField 0
+
 secondsP :: Parser SecondSpec
 secondsP = Seconds <$> cronFieldP
 

@@ -1,9 +1,30 @@
-adding to the fork:
-- seconds resolution
-- microseconds resolution
-- nice example with timers that go off second, minute, hour, week, month, year.. etc (will be in examples/simple.c)
+Fork
+===
 
+I've made some mods to the origina cron repository. Most notably, i've added "seconds" resolution. Would it be nice to add micros? Probably yes.
 
+Install
+---
+
+make
+
+Example
+---
+
+This simple example takes a "microsecond delay" and a "cron string" as arguments. It then sleeps for the microsecond delay and prints "ping" if the current time matches the schedule represented by the cron string.
+
+```
+./.cabal-sandbox/bin/ping 1000000 "*/2 * * * * *"
+```
+
+Parsing cron strings
+---
+
+```
+ parseOnly cronSchedule "*/2 * 3 * 4,5,6"
+ parseOnly cronScheduleLoose "*/2 * 3 * 4,5,6"
+ parseOnly cronScheduleLooseGranular "* */2 * 3 * 4,5,6"
+```
 
 cron
 ====

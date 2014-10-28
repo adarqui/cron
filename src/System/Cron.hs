@@ -42,10 +42,12 @@ module System.Cron (CronSchedule(..),
                     daily,
                     weekly,
                     hourly,
+                    secondly,
                     everyMinute,
                     everySecond,
                     scheduleMatches) where
 
+import           Data.Fixed
 import           Data.List                   (intercalate)
 
 import           Data.Text                   (Text, unpack)
@@ -55,12 +57,12 @@ import           Data.Time.Clock             (UTCTime(..))
 import           Data.Time.LocalTime         (TimeOfDay(..), timeToTimeOfDay)
 
 -- | Specification for a cron expression
-data CronSchedule = CronSchedule { second     :: SecondSpec,
-                                   minute     :: MinuteSpec,     -- ^ Which minutes to run. First field in a cron specification.
-                                   hour       :: HourSpec,       -- ^ Which hours to run. Second field in a cron specification.
-                                   dayOfMonth :: DayOfMonthSpec, -- ^ Which days of the month to run. Third field in a cron specification.
-                                   month      :: MonthSpec,      -- ^ Which months to run. Fourth field in a cron specification.
-                                   dayOfWeek  :: DayOfWeekSpec   -- ^ Which days of the week to run. Fifth field in a cron specification.
+data CronSchedule = CronSchedule { second     :: SecondSpec,     -- ^ Which seconds to run, First field in a cron specification
+                                   minute     :: MinuteSpec,     -- ^ Which minutes to run. Second field in a cron specification.
+                                   hour       :: HourSpec,       -- ^ Which hours to run. Third field in a cron specification.
+                                   dayOfMonth :: DayOfMonthSpec, -- ^ Which days of the month to run. Fourth field in a cron specification.
+                                   month      :: MonthSpec,      -- ^ Which months to run. Fifth field in a cron specification.
+                                   dayOfWeek  :: DayOfWeekSpec   -- ^ Which days of the week to run. Sixth field in a cron specification.
                                  }
                                    deriving (Eq)
 
@@ -171,16 +173,10 @@ daily = hourly { hour = Hours $ SpecificField 0 }
 hourly :: CronSchedule
 hourly = everyMinute { minute = Minutes $ SpecificField 0 }
 
+secondly :: CronSchedule
+secondly = everySecond { second = Seconds $ SpecificField 0 }
+
 -- | Shorthand for an expression that always matches. Parsed with * * * * *
-{-
-everyMinute :: CronSchedule
-everyMinute = CronSchedule { second     = Seconds Star,
-                             minute     = Minutes Star,
-                             hour       = Hours Star,
-                             dayOfMonth = DaysOfMonth Star,
-                             month      = Months Star,
-                             dayOfWeek  = DaysOfWeek Star}
-                             -}
 everyMinute :: CronSchedule
 everyMinute = everySecond { second = Seconds $ SpecificField 0 }
 
@@ -211,13 +207,16 @@ scheduleMatches CronSchedule {
   where (_, mth, dom) = toGregorian uDay
         (_, _, dow) = toWeekDate uDay
         TimeOfDay { todHour = hr,
-                    todMin  = mn} = timeToTimeOfDay uTime
-        validations = map validate [(mn, CMinute, mins),
+                    todMin  = mn,
+                    todSec = sn} = timeToTimeOfDay uTime
+        validations = map validate [(fromIntegral tsec :: Int, CSecond, secs),
+                                    (mn, CMinute, mins),
                                     (hr, CHour, hrs),
                                     (dom, CDayOfMonth, doms),
                                     (mth, CMonth, months),
                                     (dow, CDayOfWeek, dows)]
         validate (x, y, z) = matchField x y z
+        tsec = let (s,p) = fromFixed sn in (s `div` p)
 
 matchField :: Int
               -> CronUnit
@@ -251,16 +250,20 @@ fillTo start finish step
   | finish < start = []
   | otherwise      = [ x | x <- [start..finish], x `mod` step == 0]
 
-data CronUnit = CMinute     |
+data CronUnit = CSecond     |
+                CMinute     |
                 CHour       |
                 CDayOfMonth |
                 CMonth      |
                 CDayOfWeek deriving (Show, Eq)
 
 maxValue :: CronUnit -> Int
---maxValue CSecond     = 59
+maxValue CSecond     = 59
 maxValue CMinute     = 59
 maxValue CHour       = 23
 maxValue CDayOfMonth = 31
 maxValue CMonth      = 12
 maxValue CDayOfWeek  = 6
+
+fromFixed :: (HasResolution a) => Fixed a -> (Integer,Integer) 
+fromFixed f@(MkFixed i) = (i, resolution f) 

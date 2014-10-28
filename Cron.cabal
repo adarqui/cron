@@ -1,4 +1,4 @@
-Name:                cron
+Name:                Cron
 Version:             0.2.1
 Description:
   Cron data structure and Attoparsec parser. The idea is to embed it in larger
@@ -60,8 +60,8 @@ source-repository head
   Type:     git
   Location: https://github.com/michaelxavier/cron
 
-executable "simple"
-  main-is:             simple.hs
-  build-depends:       base ==4.7.*, cron, time ==1.4.2
-  GHC-Options:         -O3 -Wall -threaded -rtsopts
+executable "ping"
+  main-is:             ping.hs
+  build-depends:       base ==4.7.*, attoparsec, time ==1.4.2, text, cron
+  GHC-Options:         -O2 -Wall -threaded -rtsopts
   hs-source-dirs:      examples
