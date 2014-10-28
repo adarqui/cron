@@ -22,6 +22,7 @@ main = do
      ping (read pause :: Int) cron'
   otherwise -> error "usage: ./ping <pause-in-microseconds> 'seconds minutes hours days months years'"
 
+ping :: Int -> CronSchedule -> IO ()
 ping pause cron = do
  forever $ do
   now <- getCurrentTime
