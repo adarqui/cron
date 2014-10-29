@@ -25,7 +25,7 @@ main = do
 ping :: Int -> CronSchedule -> IO ()
 ping pause cron = do
  forever $ do
+  threadDelay pause
   now <- getCurrentTime
   putStrLn $ show now
-  threadDelay pause
   when (scheduleMatches cron now) $ putStrLn "ping"
